@@ -1,0 +1,189 @@
+using UnityEngine;
+
+public class PlayerController : MonoBehaviour
+{
+    public float speed = 5f;
+
+    void Update()
+    {
+        float horizontalInput = Input.GetAxis("Horizontal");
+        float verticalInput = Input.GetAxis("Vertical");
+
+        Vector3 movement = new Vector3(horizontalInput, verticalInput, 0) * speed * Time.deltaTime;
+        transform.Translate(movement);
+    }
+}
+
+---
+using UnityEngine;
+
+public class EnemyController : MonoBehaviour
+{
+    public float speed = 3f;
+
+    void Update()
+    {
+        transform.Translate(Vector3.down * speed * Time.deltaTime);
+    }
+}
+---
+using UnityEngine;
+using UnityEngine.UI;
+
+public class PlayerHealth : MonoBehaviour
+{
+    public int startingHealth = 3;
+    public Text healthText;
+    
+    private int currentHealth;
+
+    void Start()
+    {
+        currentHealth = startingHealth;
+        UpdateHealthUI();
+    }
+
+    public void TakeDamage(int amount)
+    {
+        currentHealth -= amount;
+        UpdateHealthUI();
+
+        if (currentHealth <= 0)
+        {
+            // Гравець помер
+            Debug.Log("Game Over");
+        }
+    }
+
+    void UpdateHealthUI()
+    {
+        healthText.text = "Health: " + currentHealth;
+    }
+}
+---
+using UnityEngine;
+
+public class BonusController : MonoBehaviour
+{
+    public float speed = 2f;
+
+    void Update()
+    {
+        transform.Translate(Vector3.down * speed * Time.deltaTime);
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            // Логіка для обробки зіткнення з гравцем і надання бонусу
+            Destroy(gameObject);
+        }
+    }
+}
+---
+using UnityEngine;
+using UnityEngine.UI;
+
+public class ScoreManager : MonoBehaviour
+{
+    public Text scoreText;
+    private int score = 0;
+
+    public void AddScore(int points)
+    {
+        score += points;
+        UpdateScoreUI();
+    }
+
+    void UpdateScoreUI()
+    {
+        scoreText.text = "Score: " + score;
+    }
+}
+---
+using UnityEngine;
+
+public class GameManager : MonoBehaviour
+{
+    public void SaveGame()
+    {
+        PlayerPrefs.SetInt("CurrentLevel", currentLevel);
+        PlayerPrefs.SetInt("PlayerLives", playerLives);
+        PlayerPrefs.SetInt("PlayerScore", playerScore);
+        PlayerPrefs.Save();
+    }
+
+    public void LoadGame()
+    {
+        currentLevel = PlayerPrefs.GetInt("CurrentLevel");
+        playerLives = PlayerPrefs.GetInt("PlayerLives");
+        playerScore = PlayerPrefs.GetInt("PlayerScore");
+    }
+}
+----
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class MenuManager : MonoBehaviour
+{
+    public GameObject startMenu;
+    public GameObject gameMenu;
+    public GameObject settingsMenu;
+
+    public void StartGame()
+    {
+        SceneManager.LoadScene("GameScene"); // Завантажуємо сцену гри
+    }
+
+    public void OpenSettings()
+    {
+        startMenu.SetActive(false);
+        settingsMenu.SetActive(true);
+    }
+
+    public void CloseSettings()
+    {
+        settingsMenu.SetActive(false);
+        startMenu.SetActive(true);
+    }
+
+    public void QuitGame()
+    {
+        Application.Quit(); // Вихід з гри
+    }
+}
+---
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+public class LevelManager : MonoBehaviour
+{
+    public int[] scoreThresholds; // Масив порогів очків для переходу на наступний рівень
+    private ScoreManager scoreManager;
+
+    void Start()
+    {
+        scoreManager = FindObjectOfType<ScoreManager>();
+    }
+
+    void Update()
+    {
+        CheckLevelCompletion();
+    }
+
+    void CheckLevelCompletion()
+    {
+        int currentScore = scoreManager.GetScore();
+
+        for (int i = 0; i < scoreThresholds.Length; i++)
+        {
+            if (currentScore >= scoreThresholds[i])
+            {
+                // Перехід на наступний рівень
+                SceneManager.LoadScene("Level" + (i + 2)); // Перехід на наступну сцену рівня
+                break;
+            }
+        }
+    }
+}
